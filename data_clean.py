@@ -1,6 +1,6 @@
-# ============================================================
+
 #STEP 1: Import Libraries
-# ============================================================
+
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -11,9 +11,7 @@ from keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_squared_error
 import math
 
-# ============================================================
 #STEP 2: Load and preprocess data 
-# ============================================================
 
 data = pd.read_csv("sorted_new.csv")
 
@@ -37,10 +35,7 @@ monthly_revenue['YearMonth'] = pd.to_datetime(monthly_revenue['YearMonth'])
 monthly_revenue.to_csv("monthly_revenue.csv", index=False)
 monthly_revenue.head()
 
-
-# ============================================================
 # EXTRA PLOT: Figure 1 – Monthly Revenue Trends
-# ============================================================
 
 plt.figure(figsize=(10,5))
 plt.plot(monthly_revenue['YearMonth'], monthly_revenue['Hotel_Revenue'], linewidth=2)
@@ -52,10 +47,8 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-
-# ============================================================
 # STEP 3: Prepare Data for LSTM
-# ============================================================
+
 # Sort and scale
 monthly_revenue = monthly_revenue.sort_values('YearMonth')
 scaler = MinMaxScaler(feature_range=(0,1))
@@ -74,9 +67,8 @@ n_steps = 6 # past 6 months used to predict next month
 X, y = create_sequences(scaled_data, n_steps)
 X = X.reshape((X.shape[0], X.shape[1], 1))
 
-# ============================================================
+
 # STEP 4: Train-Test Split
-# ============================================================
 
 train_size = int(len(scaled_data) * 0.8)
 train, test = scaled_data[:train_size], scaled_data[train_size:]
@@ -88,9 +80,8 @@ X_test, y_test = create_sequences(test, n_steps)
 X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
 X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
 
-# ============================================================
 # STEP 5: Build and Train the LSTM Model
-# ============================================================
+
 model = Sequential()
 model.add(LSTM(64, activation='relu', input_shape=(n_steps, 1)))
 model.add(Dense(1))
@@ -99,9 +90,7 @@ model.compile(optimizer='adam', loss='mse')
 # Train model
 history = model.fit(X_train, y_train, epochs=100, verbose=1, validation_data=(X_test, y_test))
 
-# ============================================================
 # EXTRA PLOT: Figure 2 – Training vs Validation Loss Curve
-# ============================================================
 
 plt.figure(figsize=(10,5))
 plt.plot(history.history['loss'], label='Training Loss')
@@ -114,10 +103,8 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-
-# ============================================================
 # STEP 6: Evaluate the Model
-# ============================================================
+
 # Predict on test data
 y_pred = model.predict(X_test)
 
@@ -129,9 +116,9 @@ y_test_inv = scaler.inverse_transform(y_test.reshape(-1, 1))
 rmse = math.sqrt(mean_squared_error(y_test_inv, y_pred_inv))
 print(f"Test RMSE: {rmse:.2f} LKR")
 
-# ============================================================
+
 # STEP 7: Visualize Predictions vs Actual
-# ============================================================
+
 plt.figure(figsize=(10,5))
 plt.plot(y_test_inv, label='Actual Revenue', linewidth=2)
 plt.plot(y_pred_inv, label='Predicted Revenue', linestyle='--')
@@ -141,9 +128,8 @@ plt.ylabel('Revenue (LKR)')
 plt.legend()
 plt.show()
 
-# ============================================================
 # STEP 8: Forecast Future 6 Months
-# ============================================================
+
 future_steps = 6
 last_sequence = scaled_data[-n_steps:]
 future_predictions = []
@@ -163,9 +149,9 @@ future_forecast = pd.DataFrame({'Month': future_dates, 'Predicted_Revenue': futu
 print("\n Future 6-Month Revenue Forecast:")
 print(future_forecast)
 
-# ============================================================
+
 # STEP 9A: Visualize Future Forecast (FIXED)
-# ============================================================
+
 # Convert YearMonth to datetime
 monthly_revenue['YearMonth'] = pd.to_datetime(monthly_revenue['YearMonth'])
 
@@ -187,9 +173,8 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# ============================================================
 # STEP 10: Save the Model
-# ============================================================
+
 model.save("hotel_revenue_lstm_model.h5")
 print("\nModel saved as hotel_revenue_lstm_model.h5")
 
